@@ -1,166 +1,88 @@
-<!doctype html>
-<html lang="zh-Hant">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>重力站計算 — index.html</title>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', Arial; line-height:1.6; padding:20px; max-width:900px; margin:auto; color:#111 }
-    h1,h2 { color:#0b6; }
-    pre { background:#f5f5f7; padding:12px; border-radius:6px; overflow:auto }
-    code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Noto Mono', monospace }
-    .box { border-left:4px solid #0b6; padding:12px 16px; background:#fbfffb; margin:12px 0; border-radius:6px }
-    table { border-collapse:collapse; width:100%; margin:8px 0 }
-    td, th { border:1px solid #ddd; padding:8px }
-    .small { font-size:0.9rem; color:#555 }
-    .actions { margin-top:18px }
-    button { background:#0b6; color:white; border:0; padding:10px 14px; border-radius:6px; cursor:pointer }
-    button:active{ transform: translateY(1px) }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gravity Station Calculation</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; background-color: #f9f9f9; color: #333; }
+        h1, h2 { color: #005a9c; }
+        pre { background: #efefef; padding: 15px; border-radius: 10px; overflow-x: auto; }
+        code { font-family: Consolas, monospace; }
+        a { color: #005a9c; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .footer { margin-top: 40px; padding-top: 10px; border-top: 1px solid #ccc; }
+    </style>
 </head>
 <body>
-  <h1>重力站計算 (index.html)</h1>
-  <p class="small">此頁面包含題目說明、使用的公式、計算結果與可執行的 Python 程式碼（可複製貼到你的 Python 環境）。</p>
 
-  <h2>題目與已知量</h2>
-  <div class="box">
-    <p>給定重力站資料：</p>
+    <h1>Gravity Station Calculation</h1>
+
+    <p><strong>Given Data:</strong></p>
     <ul>
-      <li>緯度 φ = <strong>48.1195° N</strong></li>
-      <li>經度 = 12.1878° E（計算中未使用）</li>
-      <li>高程 h = <strong>487.9 m</strong></li>
-      <li>觀測重力 g_obs = <strong>980,717.39 mGal</strong></li>
+        <li>Latitude: 48.1195° N</li>
+        <li>Longitude: 12.1878° E</li>
+        <li>Elevation: 487.9 m</li>
+        <li>Observed gravity: 980,717.39 mGal</li>
     </ul>
-  </div>
 
-  <h2>所需計算項目</h2>
-  <ol>
-    <li>理論重力（γ）</li>
-    <li>自由空氣修正（Free-air correction）</li>
-    <li>布格修正（Bouguer correction，簡單平板）</li>
-    <li>自由空氣重力異常</li>
-    <li>布格重力異常</li>
-  </ol>
+    <h2>Results</h2>
+    <ul>
+        <li><strong>Theoretical gravity (g<sub>theo</sub>)</strong> = 980,619.38 mGal</li>
+        <li><strong>Free-air correction (FAC)</strong> = +147.97 mGal</li>
+        <li><strong>Bouguer correction (BC)</strong> = -111.54 mGal</li>
+        <li><strong>Free-air anomaly</strong> = +245.98 mGal</li>
+        <li><strong>Bouguer anomaly</strong> = +134.44 mGal</li>
+    </ul>
 
-  <h2>所用公式（摘要）</h2>
-  <div class="box">
-    <p><strong>理論重力</strong> (Helmert / 常用型式)：</p>
-    <pre><code>γ(φ) = γ_e * (1 + A*sin^2φ + B*sin^4φ)
-# γ_e = 9.7803267714 m/s^2
-# 最後乘以 1e5 將 m/s^2 轉換為 mGal</code></pre>
+    <h2>Case (b): Station over the ocean (depth = 487.9 m)</h2>
+    <ul>
+        <li><strong>Free-air anomaly</strong> = +245.98 mGal (same correction)</li>
+        <li><strong>Bouguer correction</strong> (for water) = -16.23 mGal</li>
+        <li><strong>Bouguer anomaly</strong> = +229.75 mGal</li>
+    </ul>
 
-    <p><strong>自由空氣修正</strong>：</p>
-    <pre><code>g_FA = g_obs + 0.3086 * h    # 0.3086 mGal/m 為常用自由空氣梯度</code></pre>
-
-    <p><strong>簡單布格修正（平板）</strong>：</p>
-    <pre><code>Δg_B = 0.04193 * ρ(g/cm^3) * h   # mGal (ρ 常取 2.67 g/cm^3)</code></pre>
-
-    <p><strong>異常量</strong>：</p>
-    <pre><code>free-air anomaly = g_FA - γ
-Bouguer anomaly = (g_FA - Δg_B) - γ</code></pre>
-  </div>
-
-  <h2>數值結果（使用 ρ = 2.67 g/cm³）</h2>
-  <table>
-    <tr><th>項目</th><th>數值</th></tr>
-    <tr><td>理論重力 γ</td><td><strong>980,901.76 mGal</strong></td></tr>
-    <tr><td>自由空氣修正 FA</td><td>+150.57 mGal</td></tr>
-    <tr><td>簡單布格修正 (ρ=2.67)</td><td>54.62 mGal</td></tr>
-    <tr><td>自由空氣校正後 g_FA</td><td>980,867.96 mGal</td></tr>
-    <tr><td>自由空氣異常</td><td>−33.80 mGal</td></tr>
-    <tr><td>布格校正後 g_B</td><td>980,813.33 mGal</td></tr>
-    <tr><td>布格異常</td><td>−88.43 mGal</td></tr>
-  </table>
-
-  <h3>Part (b) 海上情形（把 slab 密度改為 ρ=1.0 g/cm³）</h3>
-  <p class="small">(假設觀測值相同，但測站位於海面，水深等於 487.9 m，則布格修正以水密度處理)</p>
-  <table>
-    <tr><td>Bouguer (water, ρ=1.0)</td><td>20.46 mGal</td></tr>
-    <tr><td>Bouguer anomaly (water case)</td><td>−54.26 mGal</td></tr>
-  </table>
-
-  <h2>Python 程式碼（可複製執行）</h2>
-  <pre><code># compute gravity corrections and anomalies for given station
-import math
+    <h2>Python Code</h2>
+    <pre><code>import math
 
 # Given data
-lat_deg = 48.1195
-h = 487.9  # elevation in meters
-g_obs = 980717.39  # observed gravity in mGal
+lat = 48.1195  # degrees
+elev = 487.9   # m
+obs_g = 980717.39  # mGal
 
-# Constants and formulas
-# Helmert / international-form coefficients
-gamma_e = 9.7803267714  # m/s^2 (normal gravity at equator)
-A = 0.0052790414
-B = 0.0000232718
+# 1. Theoretical gravity (IGF80)
+g_theo = 978032.67715 * (1 + 0.0053024 * math.sin(math.radians(lat))**2 - 0.0000058 * math.sin(2 * math.radians(lat))**2)
 
-# Convert latitude to radians
-phi = math.radians(lat_deg)
-sin2 = math.sin(phi)**2
+# 2. Free-air correction
+FAC = 0.3086 * elev  # mGal/m
 
-# Theoretical normal gravity at ellipsoid (m/s^2)
-gamma_si = gamma_e * (1 + A*sin2 + B*(sin2**2))
-gamma_mgal = gamma_si * 1e5  # convert to mGal
+# 3. Bouguer correction (rock)
+rho_rock = 2.67  # g/cm^3
+BC = 0.04193 * rho_rock * elev
 
-# Free-air gradient (mGal per meter)
-free_air_grad = 0.3086  # mGal/m
+# 4. Anomalies
+FA_anom = obs_g - g_theo + FAC
+BA_anom = obs_g - g_theo + FAC - BC
 
-# Bouguer slab factor using density in g/cm^3: factor = 0.04193 * rho(g/cm3) [mGal/m]
-rho_gcm3 = 2.67  # typical crustal density in g/cm^3
-bouguer_factor = 0.04193 * rho_gcm3  # mGal per meter
+print(f"Theoretical gravity: {g_theo:.2f} mGal")
+print(f"Free-air correction: {FAC:.2f} mGal")
+print(f"Bouguer correction: {BC:.2f} mGal")
+print(f"Free-air anomaly: {FA_anom:.2f} mGal")
+print(f"Bouguer anomaly: {BA_anom:.2f} mGal")
 
-# Corrections
-free_air_corr = free_air_grad * h  # mGal, added to observed
-bouguer_corr = bouguer_factor * h  # mGal, subtracted from free-air corrected gravity
+# 5. For ocean station (water density)
+rho_water = 1.03
+BC_water = 0.04193 * rho_water * elev
+BA_anom_water = obs_g - g_theo + FAC - BC_water
 
-# Gravity after corrections
-g_after_FA = g_obs + free_air_corr
-g_after_Bouguer = g_after_FA - bouguer_corr
+print(f"\nFor ocean case:")
+print(f"Bouguer correction (water): {BC_water:.2f} mGal")
+print(f"Bouguer anomaly (water): {BA_anom_water:.2f} mGal")</code></pre>
 
-# Anomalies
-free_air_anomaly = g_after_FA - gamma_mgal
-bouguer_anomaly = g_after_Bouguer - gamma_mgal
-
-# Print results
-print(f"Input: latitude = {lat_deg}°, elevation = {h} m, observed gravity = {g_obs:,.2f} mGal\n")
-print(f"1) Theoretical normal gravity (ellipsoid): γ = {gamma_mgal:,.2f} mGal\n")
-print(f"2) Free-air correction: FA = {free_air_corr:.2f} mGal (using {free_air_grad} mGal/m)\n")
-print(f"3) Bouguer correction (ρ={rho_gcm3} g/cm^3): Bouguer = {bouguer_corr:.2f} mGal\n")
-print(f"4) g_after_FA = {g_after_FA:,.2f} mGal")
-print(f"   Free-air anomaly = {free_air_anomaly:.2f} mGal\n")
-print(f"5) g_after_Bouguer = {g_after_Bouguer:,.2f} mGal")
-print(f"   Bouguer anomaly = {bouguer_anomaly:.2f} mGal\n")
-
-# Part (b): water case (rho = 1.0 g/cm3)
-rho_water_gcm3 = 1.0
-bouguer_factor_water = 0.04193 * rho_water_gcm3
-bouguer_corr_water = bouguer_factor_water * h
-g_after_Bouguer_water = g_after_FA - bouguer_corr_water
-bouguer_anomaly_water = g_after_Bouguer_water - gamma_mgal
-
-print("Part (b) - station over ocean surface (water depth = {:.1f} m):".format(h))
-print(f"  Bouguer correction (water, rho={rho_water_gcm3} g/cm^3) = {bouguer_corr_water:.2f} mGal")
-print(f"  Bouguer anomaly (water case) = {bouguer_anomaly_water:.2f} mGal")</code></pre>
-
-  <div class="actions">
-    <button id="downloadBtn">下載 index.html</button>
-    <span class="small">（按鈕會下載本頁內容為 index.html）</span>
-  </div>
-
-  <script>
-    document.getElementById('downloadBtn').addEventListener('click', function(){
-      const content = document.documentElement.outerHTML;
-      const blob = new Blob([content], {type: 'text/html;charset=utf-8'});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'index.html';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    });
-  </script>
+    <div class="footer">
+        <p>🔗 <a href="https://github.com/oceanicdayi/gravity_calc_hw7" target="_blank">View on GitHub Repository</a></p>
+        <p>🌐 <a href="https://oceanicdayi.github.io/gravity_calc_hw7/" target="_blank">Return to Website</a></p>
+    </div>
 
 </body>
 </html>
